@@ -17,11 +17,23 @@
         color: attrArray[0]   // mean_temp
     };
 
+    // chart frame dimensions moved to pseudo-global scope
+    var chartWidth = window.innerWidth * 0.5 - 25,
+        chartHeight = 460;
+
+    // chart margins moved to pseudo-global scope
+    var leftPadding = 60,
+        rightPadding = 20,
+        topPadding = 30,
+        bottomPadding = 55;
+
+    var chartInnerWidth = chartWidth - leftPadding - rightPadding,
+        chartInnerHeight = chartHeight - topPadding - bottomPadding;
 
     // Initialize map on page load
     window.onload = setMap();
 
-    // Creat the map
+    // Create the map
     function setMap() {
 
         // Define responsive map size
@@ -34,7 +46,6 @@
             .attr("class", "map")
             .attr("width", width)
             .attr("height", height);
-
 
         // Define projection
         var projection = d3.geoAlbers();
@@ -56,7 +67,6 @@
             var csvData = data[0],
                 countiesData = data[1];
 
-
             // Convert TopoJSON → GeoJSON
             var wiState = topojson.feature(
                     countiesData,
@@ -76,8 +86,6 @@
                 .attr("class", "state")
                 .attr("d", path);
 
-
-
             // Join CSV data to counties
             wiCounties = joinData(wiCounties, csvData);
 
@@ -89,10 +97,14 @@
 
             // Create bubble chart
             setChart(csvData, colorScale);
+
+            // Create navbar title and dropdown menus
+            createTitle();
+            createDropdown(csvData, "color", "Select Color/Size");
+            createDropdown(csvData, "x", "Select X");
+            createDropdown(csvData, "y", "Select Y");
         }
     }
-
-
 
     // JOIN CSV TO GEOJSON
     function joinData(wiCounties, csvData) {
@@ -120,9 +132,6 @@
         return wiCounties;
     }
 
-
-
-
     // Color scale
     function makeColorScale(data) {
         var colorClasses = [
@@ -149,8 +158,6 @@
         return colorScale;
     }
 
-
-
     // Draw counties
     function setEnumerationUnits(wiCounties, map, path, colorScale) {
 
@@ -176,9 +183,6 @@
             });
     }
 
-
-
-
     // Data range function
     function getDataValues(csvData, expressedValue) {
 
@@ -196,9 +200,6 @@
 
         return [min - adjustment, max + adjustment];
     }
-
-
-
 
     // Create scales
     function createYScale(csvData, chartInnerHeight) {
@@ -219,8 +220,6 @@
             .domain([dataMinMax[0], dataMinMax[1]]);
     }
 
-
-
     // Create axes
     function createChartAxes(chartInner, chartInnerHeight, yScale, xScale) {
 
@@ -239,23 +238,8 @@
             .call(xAxisScale);
     }
 
-
-
-
     // Create bubble chart
     function setChart(csvData, colorScale) {
-
-        var chartWidth = window.innerWidth * 0.5 - 25,
-            chartHeight = 460;
-
-        // Margins
-        var leftPadding = 60,
-            rightPadding = 20,
-            topPadding = 30,
-            bottomPadding = 55;
-
-        var chartInnerWidth = chartWidth - leftPadding - rightPadding,
-            chartInnerHeight = chartHeight - topPadding - bottomPadding;
 
         // Create chart SVG
         var chart = d3.select("body")
@@ -266,6 +250,7 @@
 
         // Inner chart group
         var chartInner = chart.append("g")
+            .attr("class", "chartInner")
             .attr("transform", "translate(" + leftPadding + "," + topPadding + ")");
 
         // Scales
@@ -274,8 +259,6 @@
 
         // Axes
         createChartAxes(chartInner, chartInnerHeight, yScale, xScale);
-
-
 
         // Draw bubbles
         chartInner.selectAll(".circles")
@@ -297,8 +280,6 @@
                 return colorScale(parseFloat(d[expressed.color]));
             });
 
-
-
         // Title
         chart.append("text")
             .attr("class", "chartTitle")
@@ -309,20 +290,115 @@
 
         // X label
         chart.append("text")
-            .attr("class", "axisLabel")
+            .attr("class", "axisLabel xLabel")
             .attr("x", leftPadding + chartInnerWidth / 2)
             .attr("y", chartHeight - 10)
             .style("text-anchor", "middle")
-            .text("Maximum Temperature");
+            .text(expressed.x);
 
         // Y label
         chart.append("text")
-            .attr("class", "axisLabel")
+            .attr("class", "axisLabel yLabel")
             .attr("transform", "rotate(-90)")
             .attr("x", -(topPadding + chartInnerHeight / 2))
             .attr("y", 18)
             .style("text-anchor", "middle")
-            .text("Minimum Temperature");
+            .text(expressed.y);
+    }
+
+    // Create page title in navbar
+    function createTitle() {
+        d3.select(".navbar")
+            .append("h1")
+            .attr("class", "pageTitle")
+            .text("Wisconsin Climate Dashboard");
+    }
+
+    // Create dropdown menu for attribute selection
+    function createDropdown(csvData, expressedAttribute, menuLabel) {
+
+        // add dropdown label
+        d3.select(".navbar")
+            .append("p")
+            .attr("class", "dropdown-label")
+            .text(menuLabel + ": ");
+
+        // add select element
+        var dropdown = d3.select(".navbar")
+            .append("select")
+            .attr("class", "dropdown")
+            .on("change", function () {
+                changeAttribute(this.value, expressedAttribute, csvData);
+            });
+
+        // add initial option
+        dropdown.append("option")
+            .attr("class", "titleOption")
+            .attr("disabled", "true")
+            .text(expressed[expressedAttribute]);
+
+        // add attribute name options
+        dropdown.selectAll("attrOptions")
+            .data(attrArray)
+            .enter()
+            .append("option")
+            .attr("value", function (d) { return d; })
+            .text(function (d) { return d; });
+    }
+
+    // dropdown change event handler
+    function changeAttribute(attribute, expressedAttribute, csvData) {
+
+        // change the expressed attribute
+        expressed[expressedAttribute] = attribute;
+
+        // recreate x and y scales
+        var yScale = createYScale(csvData, chartInnerHeight);
+        var xScale = createXScale(csvData, chartInnerWidth);
+
+        // recreate the color scale
+        var colorScale = makeColorScale(csvData);
+
+        // recolor enumeration units
+        d3.selectAll(".counties")
+            .style("fill", function (d) {
+                var value = d.properties[expressed.color];
+                if (value || value === 0) {
+                    return colorScale(d.properties[expressed.color]);
+                } else {
+                    return "#ccc";
+                }
+            });
+
+        // update bubbles
+        d3.selectAll(".bubble")
+            .style("fill", function (d) {
+                return colorScale(parseFloat(d[expressed.color]));
+            })
+            .attr("r", function (d) {
+                var minRadius = 2.5;
+                return Math.pow(parseFloat(d[expressed.color]), 0.5715) * minRadius;
+            })
+            .attr("cx", function (d) {
+                return xScale(parseFloat(d[expressed.x]));
+            })
+            .attr("cy", function (d) {
+                return yScale(parseFloat(d[expressed.y]));
+            });
+
+        // update axes
+        d3.select(".xaxis")
+            .call(d3.axisBottom().scale(xScale));
+
+        d3.select(".yaxis")
+            .call(d3.axisLeft().scale(yScale));
+
+        // update axis labels
+        d3.select(".xLabel")
+            .text(expressed.x);
+
+        d3.select(".yLabel")
+            .text(expressed.y);
     }
 
 })();
