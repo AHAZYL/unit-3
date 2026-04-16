@@ -183,6 +183,9 @@
             })
             .on("mouseover", function (event, d) {
                 highlight({ county: d.properties.NAME });
+            })
+            .on("mouseout", function (event, d) {
+                dehighlight({ county: d.properties.NAME });
             });
     }
 
@@ -288,6 +291,9 @@
             })
             .on("mouseover", function (event, d) {
                 highlight(d);
+            })
+            .on("mouseout", function (event, d) {
+                dehighlight(d);
             });
 
         // Title
@@ -437,6 +443,24 @@
                 return elemClasses;
             })
             .raise();
+    }
+
+    // function to dehighlight linked county and bubble
+    function dehighlight(props) {
+
+        var selected = d3.selectAll("." + props.county
+            .replace(/\s+/g, "_")
+            .replace(/[^\w]/g, ""))
+            .attr("class", function () {
+
+                // get current list of classes for each element
+                let elemClasses = this.classList;
+
+                // remove class "selected" from class list
+                elemClasses.remove("selected");
+
+                return elemClasses;
+            });
     }
 
 })();

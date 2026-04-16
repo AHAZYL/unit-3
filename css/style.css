@@ -117,7 +117,14 @@ option {
     fill: #333;
 }
 
+/* Highlighted linked features (retrieve interaction) */
 .selected {
     stroke: blue;
     stroke-width: 2px;
+}
+
+/* Smooth visual transitions for highlight */
+.counties,
+.bubble {
+    transition: stroke 0.2s, stroke-width 0.2s;
 }
