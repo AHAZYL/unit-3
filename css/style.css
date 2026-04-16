@@ -116,3 +116,8 @@ option {
     font-size: 12px;
     fill: #333;
 }
+
+.selected {
+    stroke: blue;
+    stroke-width: 2px;
+}

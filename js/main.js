@@ -31,7 +31,7 @@
         chartInnerHeight = chartHeight - topPadding - bottomPadding;
 
     // Initialize map on page load
-    window.onload = setMap();
+    window.onload = setMap;
 
     // Create the map
     function setMap() {
@@ -180,6 +180,9 @@
                 } else {
                     return "#ccc";
                 }
+            })
+            .on("mouseover", function (event, d) {
+                highlight({ county: d.properties.NAME });
             });
     }
 
@@ -265,7 +268,11 @@
             .data(csvData)
             .enter()
             .append("circle")
-            .attr("class", "bubble")
+            .attr("class", function (d) {
+                return "bubble " + d.county
+                    .replace(/\s+/g, "_")
+                    .replace(/[^\w]/g, "");
+            })
             .attr("r", function (d) {
                 var minRadius = 2.5;
                 return Math.pow(parseFloat(d[expressed.color]), 0.5715) * minRadius;
@@ -278,6 +285,9 @@
             })
             .style("fill", function (d) {
                 return colorScale(parseFloat(d[expressed.color]));
+            })
+            .on("mouseover", function (event, d) {
+                highlight(d);
             });
 
         // Title
@@ -361,6 +371,8 @@
 
         // recolor enumeration units
         d3.selectAll(".counties")
+            .transition()
+            .duration(1000)
             .style("fill", function (d) {
                 var value = d.properties[expressed.color];
                 if (value || value === 0) {
@@ -372,6 +384,8 @@
 
         // update bubbles
         d3.selectAll(".bubble")
+            .transition()
+            .duration(1000)
             .style("fill", function (d) {
                 return colorScale(parseFloat(d[expressed.color]));
             })
@@ -388,9 +402,13 @@
 
         // update axes
         d3.select(".xaxis")
+            .transition()
+            .duration(1000)
             .call(d3.axisBottom().scale(xScale));
 
         d3.select(".yaxis")
+            .transition()
+            .duration(1000)
             .call(d3.axisLeft().scale(yScale));
 
         // update axis labels
@@ -399,6 +417,26 @@
 
         d3.select(".yLabel")
             .text(expressed.y);
+    }
+
+    // function to highlight linked county and bubble
+    function highlight(props) {
+
+        var selected = d3.selectAll("." + props.county
+            .replace(/\s+/g, "_")
+            .replace(/[^\w]/g, ""))
+            .attr("class", function () {
+
+                // get current list of classes for each element
+                let elemClasses = this.classList;
+
+                // add "selected" to classList
+                elemClasses += " selected";
+
+                // add class "selected" to class list
+                return elemClasses;
+            })
+            .raise();
     }
 
 })();
