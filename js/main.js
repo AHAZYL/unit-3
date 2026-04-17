@@ -1,31 +1,66 @@
 (function () {
     // Global variables
-    // List of all attributes in dataset
-    var attrArray = [
-        "mean_temp",
-        "max_temp",
-        "min_temp",
-        "wind_speed",
-        "solar_radiation",
-        "humidity"
+    // Attribute objects with human-readable labels, units, and descriptions
+    var attrObjects = [
+        {
+            attr: "mean_temp",
+            label: "Mean Temperature",
+            unit: "°C",
+            description: "Average county temperature during the study period."
+        },
+        {
+            attr: "max_temp",
+            label: "Maximum Temperature",
+            unit: "°C",
+            description: "Highest observed county temperature during the study period."
+        },
+        {
+            attr: "min_temp",
+            label: "Minimum Temperature",
+            unit: "°C",
+            description: "Lowest observed county temperature during the study period."
+        },
+        {
+            attr: "wind_speed",
+            label: "Wind Speed",
+            unit: "m/s",
+            description: "Average wind speed measured for each county."
+        },
+        {
+            attr: "solar_radiation",
+            label: "Solar Radiation",
+            unit: "W/m²",
+            description: "Amount of incoming solar energy received in each county."
+        },
+        {
+            attr: "humidity",
+            label: "Humidity",
+            unit: "%",
+            description: "Average relative humidity for each county."
+        }
     ];
+
+    // Keep list of attribute names for joins and loops
+    var attrArray = attrObjects.map(function (d) {
+        return d.attr;
+    });
 
     // Object storing which variables are currently expressed
     var expressed = {
-        x: attrArray[1],      // max_temp
-        y: attrArray[2],      // min_temp
-        color: attrArray[0]   // mean_temp
+        x: "max_temp",
+        y: "min_temp",
+        color: "mean_temp"
     };
 
-    // chart frame dimensions moved to pseudo-global scope
-    var chartWidth = window.innerWidth * 0.5 - 25,
-        chartHeight = 460;
+    // Responsive chart frame dimensions
+    var chartWidth = window.innerWidth < 700 ? window.innerWidth - 40 : window.innerWidth * 0.5 - 25,
+        chartHeight = window.innerHeight - 170;
 
-    // chart margins moved to pseudo-global scope
-    var leftPadding = 60,
-        rightPadding = 20,
-        topPadding = 30,
-        bottomPadding = 55;
+    // Chart margins
+    var leftPadding = 70,
+        rightPadding = 25,
+        topPadding = 45,
+        bottomPadding = 65;
 
     var chartInnerWidth = chartWidth - leftPadding - rightPadding,
         chartInnerHeight = chartHeight - topPadding - bottomPadding;
@@ -36,9 +71,9 @@
     // Create the map
     function setMap() {
 
-        // Define responsive map size
-        var width = window.innerWidth * 0.5 - 25,
-            height = 460;
+        // Responsive map size
+        var width = window.innerWidth < 700 ? window.innerWidth - 40 : window.innerWidth * 0.5 - 25,
+            height = window.innerHeight - 170;
 
         // Create SVG container for map
         var map = d3.select("body")
@@ -98,11 +133,16 @@
             // Create bubble chart
             setChart(csvData, colorScale);
 
-            // Create navbar title and dropdown menus
+            // Create navbar title, subtitle, and dropdown menus
             createTitle();
-            createDropdown(csvData, "color", "Select Color/Size");
-            createDropdown(csvData, "x", "Select X");
-            createDropdown(csvData, "y", "Select Y");
+            createSubtitle();
+            createDropdown(csvData, "color", "Map + Bubble Color/Size");
+            createDropdown(csvData, "x", "Bubble X-Axis");
+            createDropdown(csvData, "y", "Bubble Y-Axis");
+
+            // Create description panel below the visualizations
+            createDescription();
+            updateDescription();
         }
     }
 
@@ -132,14 +172,55 @@
         return wiCounties;
     }
 
+    // Helper: get label for attribute
+    function getAttrLabel(attrName) {
+        for (var i = 0; i < attrObjects.length; i++) {
+            if (attrObjects[i].attr === attrName) {
+                return attrObjects[i].label;
+            }
+        }
+        return attrName;
+    }
+
+    // Helper: get unit for attribute
+    function getAttrUnit(attrName) {
+        for (var i = 0; i < attrObjects.length; i++) {
+            if (attrObjects[i].attr === attrName) {
+                return attrObjects[i].unit;
+            }
+        }
+        return "";
+    }
+
+    // Helper: get description for attribute
+    function getAttrDescription(attrName) {
+        for (var i = 0; i < attrObjects.length; i++) {
+            if (attrObjects[i].attr === attrName) {
+                return attrObjects[i].description;
+            }
+        }
+        return "";
+    }
+
+    // Helper: create bubble size scale
+    function createRadiusScale(csvData) {
+        var maxValue = d3.max(csvData, function (d) {
+            return parseFloat(d[expressed.color]);
+        });
+
+        return d3.scaleSqrt()
+            .domain([0, maxValue])
+            .range([5, 22]);
+    }
+
     // Color scale
     function makeColorScale(data) {
         var colorClasses = [
-            "#fee5d9",
-            "#fcae91",
-            "#fb6a4a",
-            "#de2d26",
-            "#a50f15"
+            "#fde0dd",
+            "#fcbba1",
+            "#fc9272",
+            "#ef3b2c",
+            "#99000d"
         ];
 
         // Quantile scale
@@ -178,15 +259,24 @@
                 if (value || value === 0) {
                     return colorScale(value);
                 } else {
-                    return "#ccc";
+                    return "#d9d9d9";
                 }
             })
             .on("mouseover", function (event, d) {
-                highlight({ county: d.properties.NAME });
+                highlight({
+                    county: d.properties.NAME,
+                    mean_temp: d.properties.mean_temp,
+                    max_temp: d.properties.max_temp,
+                    min_temp: d.properties.min_temp,
+                    wind_speed: d.properties.wind_speed,
+                    solar_radiation: d.properties.solar_radiation,
+                    humidity: d.properties.humidity
+                });
             })
             .on("mouseout", function (event, d) {
                 dehighlight({ county: d.properties.NAME });
-            });
+            })
+            .on("mousemove", moveLabel);
     }
 
     // Data range function
@@ -247,6 +337,8 @@
     // Create bubble chart
     function setChart(csvData, colorScale) {
 
+        var radiusScale = createRadiusScale(csvData);
+
         // Create chart SVG
         var chart = d3.select("body")
             .append("svg")
@@ -277,8 +369,7 @@
                     .replace(/[^\w]/g, "");
             })
             .attr("r", function (d) {
-                var minRadius = 2.5;
-                return Math.pow(parseFloat(d[expressed.color]), 0.5715) * minRadius;
+                return radiusScale(parseFloat(d[expressed.color]));
             })
             .attr("cx", function (d) {
                 return xScale(parseFloat(d[expressed.x]));
@@ -294,32 +385,33 @@
             })
             .on("mouseout", function (event, d) {
                 dehighlight(d);
-            });
+            })
+            .on("mousemove", moveLabel);
 
-        // Title
+        // Chart title
         chart.append("text")
             .attr("class", "chartTitle")
             .attr("x", chartWidth / 2)
-            .attr("y", 20)
+            .attr("y", 24)
             .style("text-anchor", "middle")
-            .text("Wisconsin Climate Bubble Chart");
+            .text("County Climate Comparison Bubble Chart");
 
         // X label
         chart.append("text")
             .attr("class", "axisLabel xLabel")
             .attr("x", leftPadding + chartInnerWidth / 2)
-            .attr("y", chartHeight - 10)
+            .attr("y", chartHeight - 15)
             .style("text-anchor", "middle")
-            .text(expressed.x);
+            .text(getAttrLabel(expressed.x) + " (" + getAttrUnit(expressed.x) + ")");
 
         // Y label
         chart.append("text")
             .attr("class", "axisLabel yLabel")
             .attr("transform", "rotate(-90)")
             .attr("x", -(topPadding + chartInnerHeight / 2))
-            .attr("y", 18)
+            .attr("y", 22)
             .style("text-anchor", "middle")
-            .text(expressed.y);
+            .text(getAttrLabel(expressed.y) + " (" + getAttrUnit(expressed.y) + ")");
     }
 
     // Create page title in navbar
@@ -327,7 +419,15 @@
         d3.select(".navbar")
             .append("h1")
             .attr("class", "pageTitle")
-            .text("Wisconsin Climate Dashboard");
+            .text("Wisconsin County Climate Dashboard");
+    }
+
+    // Create subtitle
+    function createSubtitle() {
+        d3.select(".navbar")
+            .append("p")
+            .attr("class", "pageSubtitle")
+            .text("Interactive comparison of county-level temperature, wind, solar radiation, and humidity across Wisconsin.");
     }
 
     // Create dropdown menu for attribute selection
@@ -351,15 +451,50 @@
         dropdown.append("option")
             .attr("class", "titleOption")
             .attr("disabled", "true")
-            .text(expressed[expressedAttribute]);
+            .property("selected", true)
+            .text(getAttrLabel(expressed[expressedAttribute]));
 
         // add attribute name options
         dropdown.selectAll("attrOptions")
-            .data(attrArray)
+            .data(attrObjects)
             .enter()
             .append("option")
-            .attr("value", function (d) { return d; })
-            .text(function (d) { return d; });
+            .attr("value", function (d) { return d.attr; })
+            .text(function (d) { return d.label; });
+    }
+
+    // Create description section
+    function createDescription() {
+        d3.select("body")
+            .append("div")
+            .attr("class", "infoPanel")
+            .attr("id", "infoPanel");
+    }
+
+    // Update description section
+    function updateDescription() {
+        var html =
+            "<h2>About This Dashboard</h2>" +
+            "<p><b>Aim:</b> This map explores county-level climate variation across Wisconsin and helps users compare how temperature, wind, solar radiation, and humidity differ spatially.</p>" +
+            "<p><b>How to read the map:</b> The choropleth map shows the currently selected <b>Map + Bubble Color/Size</b> variable across Wisconsin counties. Darker red indicates higher values, and lighter red indicates lower values.</p>" +
+            "<p><b>How to read the bubble chart:</b> Each circle represents one Wisconsin county. The <b>X-axis</b> and <b>Y-axis</b> show two selected climate variables, while <b>bubble size and color</b> both represent the selected color/size variable. Larger circles indicate higher values of that selected variable.</p>" +
+            "<h3>Current Variables</h3>" +
+            "<ul>" +
+            "<li><b>Map + Bubble Color/Size:</b> " + getAttrLabel(expressed.color) + " (" + getAttrUnit(expressed.color) + ") — " + getAttrDescription(expressed.color) + "</li>" +
+            "<li><b>Bubble X-Axis:</b> " + getAttrLabel(expressed.x) + " (" + getAttrUnit(expressed.x) + ") — " + getAttrDescription(expressed.x) + "</li>" +
+            "<li><b>Bubble Y-Axis:</b> " + getAttrLabel(expressed.y) + " (" + getAttrUnit(expressed.y) + ") — " + getAttrDescription(expressed.y) + "</li>" +
+            "</ul>" +
+            "<h3>Parameter Definitions</h3>" +
+            "<ul>" +
+            "<li><b>Mean Temperature:</b> Average county temperature during the study period.</li>" +
+            "<li><b>Maximum Temperature:</b> Highest observed county temperature during the study period.</li>" +
+            "<li><b>Minimum Temperature:</b> Lowest observed county temperature during the study period.</li>" +
+            "<li><b>Wind Speed:</b> Average wind speed measured for each county.</li>" +
+            "<li><b>Solar Radiation:</b> Amount of incoming solar energy received in each county.</li>" +
+            "<li><b>Humidity:</b> Average relative humidity for each county.</li>" +
+            "</ul>";
+
+        d3.select("#infoPanel").html(html);
     }
 
     // dropdown change event handler
@@ -375,6 +510,9 @@
         // recreate the color scale
         var colorScale = makeColorScale(csvData);
 
+        // recreate the radius scale
+        var radiusScale = createRadiusScale(csvData);
+
         // recolor enumeration units
         d3.selectAll(".counties")
             .transition()
@@ -384,7 +522,7 @@
                 if (value || value === 0) {
                     return colorScale(d.properties[expressed.color]);
                 } else {
-                    return "#ccc";
+                    return "#d9d9d9";
                 }
             });
 
@@ -396,8 +534,7 @@
                 return colorScale(parseFloat(d[expressed.color]));
             })
             .attr("r", function (d) {
-                var minRadius = 2.5;
-                return Math.pow(parseFloat(d[expressed.color]), 0.5715) * minRadius;
+                return radiusScale(parseFloat(d[expressed.color]));
             })
             .attr("cx", function (d) {
                 return xScale(parseFloat(d[expressed.x]));
@@ -419,48 +556,80 @@
 
         // update axis labels
         d3.select(".xLabel")
-            .text(expressed.x);
+            .text(getAttrLabel(expressed.x) + " (" + getAttrUnit(expressed.x) + ")");
 
         d3.select(".yLabel")
-            .text(expressed.y);
+            .text(getAttrLabel(expressed.y) + " (" + getAttrUnit(expressed.y) + ")");
+
+        // update description
+        updateDescription();
     }
 
     // function to highlight linked county and bubble
     function highlight(props) {
 
-        var selected = d3.selectAll("." + props.county
+        d3.selectAll("." + props.county
             .replace(/\s+/g, "_")
             .replace(/[^\w]/g, ""))
-            .attr("class", function () {
-
-                // get current list of classes for each element
-                let elemClasses = this.classList;
-
-                // add "selected" to classList
-                elemClasses += " selected";
-
-                // add class "selected" to class list
-                return elemClasses;
-            })
+            .classed("selected", true)
             .raise();
+
+        // create label
+        setLabel(props);
     }
 
     // function to dehighlight linked county and bubble
     function dehighlight(props) {
 
-        var selected = d3.selectAll("." + props.county
+        d3.selectAll("." + props.county
             .replace(/\s+/g, "_")
             .replace(/[^\w]/g, ""))
-            .attr("class", function () {
+            .classed("selected", false);
 
-                // get current list of classes for each element
-                let elemClasses = this.classList;
+        // remove label
+        d3.select(".infolabel").remove();
+    }
 
-                // remove class "selected" from class list
-                elemClasses.remove("selected");
+    // function to create dynamic label
+    function setLabel(props) {
 
-                return elemClasses;
-            });
+        // label content
+        var labelAttribute =
+            "<h1>" + parseFloat(props[expressed.color]).toFixed(2) + " " + getAttrUnit(expressed.color) +
+            "</h1><b>" + props.county + "</b><div class='labelname'>" +
+            getAttrLabel(expressed.color) + "</div>";
+
+        // create info label div
+        d3.select("body")
+            .append("div")
+            .attr("class", "infolabel")
+            .html(labelAttribute);
+    }
+
+    // function to move label with mouse
+    function moveLabel(event) {
+
+        var labelWidth = d3.select(".infolabel")
+            .node()
+            .getBoundingClientRect().width;
+
+        // default positions
+        var x1 = event.clientX + 12,
+            y1 = event.clientY - 75;
+
+        // alternate positions (avoid overflow)
+        var x2 = event.clientX - labelWidth - 12,
+            y2 = event.clientY + 25;
+
+        // check horizontal overflow
+        var x = event.clientX > window.innerWidth - labelWidth - 20 ? x2 : x1;
+
+        // check vertical overflow
+        var y = event.clientY < 75 ? y2 : y1;
+
+        d3.select(".infolabel")
+            .style("left", x + "px")
+            .style("top", y + "px");
     }
 
 })();

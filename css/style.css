@@ -1,36 +1,63 @@
+/* Page base */
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(to bottom, #fff7f7, #f7f4f4);
+    color: #2e1b1b;
+}
+
 /* Navbar */
 .navbar {
     top: 0;
     left: 0;
-    background: lightgray;
-    padding: 20px;
+    background: linear-gradient(to right, #fde0dd, #fff5f0);
+    padding: 22px 24px 18px 24px;
+    border-bottom: 1px solid #e3c3c0;
+    box-shadow: 0 2px 8px rgba(90, 20, 20, 0.08);
 }
 
 /* Page title in navbar */
 .pageTitle {
-    font-family: sans-serif;
-    font-size: 1.5em;
-    margin: 0 0 15px 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 1.9em;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #7f0000;
+}
+
+/* Page subtitle */
+.pageSubtitle {
+    font-size: 0.98em;
+    margin: 0 0 16px 0;
+    color: #6a3d3d;
+    max-width: 900px;
+    line-height: 1.4;
 }
 
 /* Dropdown label */
 .dropdown-label {
     display: inline;
-    font-family: sans-serif;
-    font-size: 1em;
-    margin-right: 5px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: #7f0000;
+    margin-right: 6px;
 }
 
 /* Dropdown menu */
 .dropdown {
     z-index: 10;
-    font-family: sans-serif;
-    font-size: 1em;
-    font-weight: bold;
-    padding: 2px;
-    border: 2px solid #999;
-    box-shadow: 2px 2px 4px #999;
-    margin-right: 15px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 0.95em;
+    font-weight: 600;
+    padding: 5px 8px;
+    border: 1.5px solid #c77c7c;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow: 1px 2px 6px rgba(90, 20, 20, 0.08);
+    margin-right: 16px;
+    margin-bottom: 8px;
+    color: #5a2020;
 }
 
 /* Dropdown options */
@@ -40,50 +67,53 @@ option {
 
 /* Map Container */
 .map {
-    border: medium solid #999;
-    margin: 5px 0 0 0;
-    background: #f5f5f5;
+    border: 1px solid #d7b3b3;
+    border-radius: 10px;
+    margin: 12px 0 0 12px;
+    background: #fffafa;
+    box-shadow: 0 2px 10px rgba(90, 20, 20, 0.06);
 }
 
 /* Chart Container */
 .chart {
-    background-color: rgba(128,128,128,.2);
-    border: medium solid #999;
+    background-color: rgba(255, 250, 250, 0.92);
+    border: 1px solid #d7b3b3;
+    border-radius: 10px;
     float: right;
-    margin: 5px 0 0 0;
+    margin: 12px 12px 0 0;
+    box-shadow: 0 2px 10px rgba(90, 20, 20, 0.06);
 }
 
 /* State Outline */
 .state {
-    fill: #ffffff;
-    stroke: #999;
+    fill: #fffdfd;
+    stroke: #c9a5a5;
     stroke-width: 1px;
 }
 
 /* County Styling */
 .counties {
-    fill: #c5050c;
     stroke: #ffffff;
     stroke-width: 0.5px;
 }
 
 /* Hover effect for counties */
 .counties:hover {
-    fill: #8b0000;
+    filter: brightness(0.96);
 }
 
 /* Bubble Chart Styling */
 .bubble {
-    stroke: #333;
-    stroke-width: 0.5px;
-    fill-opacity: 0.8;
+    stroke: #6b3a3a;
+    stroke-width: 0.8px;
+    fill-opacity: 0.72;
 }
 
 /* Optional hover for bubbles */
 .bubble:hover {
-    stroke: black;
-    stroke-width: 1px;
-    fill-opacity: 1;
+    stroke: #3d1111;
+    stroke-width: 1.4px;
+    fill-opacity: 0.9;
 }
 
 /* Axes Styling */
@@ -92,39 +122,127 @@ option {
 .yaxis path,
 .yaxis line {
     fill: none;
-    stroke: #999;
+    stroke: #a88585;
     shape-rendering: crispEdges;
 }
 
 .xaxis text,
 .yaxis text {
-    font-family: sans-serif;
+    font-family: "Segoe UI", Arial, sans-serif;
     font-size: 12px;
-    fill: #333;
+    fill: #5a3d3d;
 }
 
 /* Text Elements */
 .chartTitle {
-    font-family: sans-serif;
-    font-size: 14px;
-    font-weight: bold;
-    fill: #333;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    fill: #7f0000;
 }
 
 .axisLabel {
-    font-family: sans-serif;
+    font-family: "Segoe UI", Arial, sans-serif;
     font-size: 12px;
-    fill: #333;
+    font-weight: 600;
+    fill: #6b2d2d;
 }
 
-/* Highlighted linked features (retrieve interaction) */
+/* Highlighted linked features */
 .selected {
-    stroke: blue;
-    stroke-width: 2px;
+    stroke: #2b6cb0;
+    stroke-width: 2.2px;
 }
 
 /* Smooth visual transitions for highlight */
 .counties,
 .bubble {
     transition: stroke 0.2s, stroke-width 0.2s;
+}
+
+/* Dynamic label */
+.infolabel {
+    position: absolute;
+    min-width: 120px;
+    color: #ffffff;
+    background: rgba(92, 20, 20, 0.95);
+    border: 1px solid #f3d6d6;
+    border-radius: 8px;
+    padding: 8px 12px;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(60, 10, 10, 0.22);
+    line-height: 1.2;
+}
+
+/* Dynamic label header */
+.infolabel h1 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff1f1;
+}
+
+/* Dynamic label secondary text */
+.labelname {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #f5dede;
+}
+
+/* Description panel */
+.infoPanel {
+    clear: both;
+    margin: 18px 18px 24px 18px;
+    padding: 18px 22px;
+    background: #fffafa;
+    border: 1px solid #d7b3b3;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(90, 20, 20, 0.05);
+    line-height: 1.55;
+}
+
+.infoPanel h2 {
+    margin: 0 0 10px 0;
+    color: #7f0000;
+    font-size: 1.35em;
+}
+
+.infoPanel h3 {
+    margin: 14px 0 8px 0;
+    color: #8f1d1d;
+    font-size: 1.08em;
+}
+
+.infoPanel p {
+    margin: 8px 0;
+    color: #4f2f2f;
+}
+
+.infoPanel ul {
+    margin: 8px 0 8px 20px;
+    padding: 0;
+}
+
+.infoPanel li {
+    margin-bottom: 6px;
+    color: #4f2f2f;
+}
+
+/* Responsive stacking */
+@media screen and (max-width: 700px) {
+    .map,
+    .chart {
+        float: none;
+        display: block;
+        margin: 12px auto 0 auto;
+    }
+
+    .dropdown {
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+
+    .infoPanel {
+        margin: 14px 12px 20px 12px;
+    }
 }
