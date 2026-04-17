@@ -497,23 +497,23 @@
         d3.select("#infoPanel").html(html);
     }
 
-    // dropdown change event handler
+    // Dropdown change event handler
     function changeAttribute(attribute, expressedAttribute, csvData) {
 
-        // change the expressed attribute
+        // Change the expressed attribute
         expressed[expressedAttribute] = attribute;
 
-        // recreate x and y scales
+        // Recreate x and y scales
         var yScale = createYScale(csvData, chartInnerHeight);
         var xScale = createXScale(csvData, chartInnerWidth);
 
-        // recreate the color scale
+        // Recreate the color scale
         var colorScale = makeColorScale(csvData);
 
-        // recreate the radius scale
+        // Recreate the radius scale
         var radiusScale = createRadiusScale(csvData);
 
-        // recolor enumeration units
+        // Recolor enumeration units
         d3.selectAll(".counties")
             .transition()
             .duration(1000)
@@ -526,7 +526,7 @@
                 }
             });
 
-        // update bubbles
+        // Update bubbles
         d3.selectAll(".bubble")
             .transition()
             .duration(1000)
@@ -543,7 +543,7 @@
                 return yScale(parseFloat(d[expressed.y]));
             });
 
-        // update axes
+        // Update axes
         d3.select(".xaxis")
             .transition()
             .duration(1000)
@@ -554,18 +554,18 @@
             .duration(1000)
             .call(d3.axisLeft().scale(yScale));
 
-        // update axis labels
+        // Update axis labels
         d3.select(".xLabel")
             .text(getAttrLabel(expressed.x) + " (" + getAttrUnit(expressed.x) + ")");
 
         d3.select(".yLabel")
             .text(getAttrLabel(expressed.y) + " (" + getAttrUnit(expressed.y) + ")");
 
-        // update description
+        // Update description
         updateDescription();
     }
 
-    // function to highlight linked county and bubble
+    // Function to highlight linked county and bubble
     function highlight(props) {
 
         d3.selectAll("." + props.county
@@ -574,11 +574,11 @@
             .classed("selected", true)
             .raise();
 
-        // create label
+        // Create label
         setLabel(props);
     }
 
-    // function to dehighlight linked county and bubble
+    // Function to dehighlight linked county and bubble
     function dehighlight(props) {
 
         d3.selectAll("." + props.county
@@ -586,45 +586,45 @@
             .replace(/[^\w]/g, ""))
             .classed("selected", false);
 
-        // remove label
+        // Remove label
         d3.select(".infolabel").remove();
     }
 
-    // function to create dynamic label
+    // Function to create dynamic label
     function setLabel(props) {
 
-        // label content
+        // Label content
         var labelAttribute =
             "<h1>" + parseFloat(props[expressed.color]).toFixed(2) + " " + getAttrUnit(expressed.color) +
             "</h1><b>" + props.county + "</b><div class='labelname'>" +
             getAttrLabel(expressed.color) + "</div>";
 
-        // create info label div
+        // Create info label div
         d3.select("body")
             .append("div")
             .attr("class", "infolabel")
             .html(labelAttribute);
     }
 
-    // function to move label with mouse
+    // Function to move label with mouse
     function moveLabel(event) {
 
         var labelWidth = d3.select(".infolabel")
             .node()
             .getBoundingClientRect().width;
 
-        // default positions
+        // Default positions
         var x1 = event.clientX + 12,
             y1 = event.clientY - 75;
 
-        // alternate positions (avoid overflow)
+        // Alternate positions (avoid overflow)
         var x2 = event.clientX - labelWidth - 12,
             y2 = event.clientY + 25;
 
-        // check horizontal overflow
+        // Check horizontal overflow
         var x = event.clientX > window.innerWidth - labelWidth - 20 ? x2 : x1;
 
-        // check vertical overflow
+        // Check vertical overflow
         var y = event.clientY < 75 ? y2 : y1;
 
         d3.select(".infolabel")
